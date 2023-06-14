@@ -1234,7 +1234,7 @@ class serialport():
 
     def TASI_TA612C(self):
         tx = self.aw.qmc.timeclock.elapsedMilli()
-        t2,t1 = self.CENTER309temperature()
+        t2,t1 = self.TASITA612Ctemperature()
         return tx,t2,t1
 
     #especial function that collects extra T3 and T4 from Vol K204 while keeping compatibility
