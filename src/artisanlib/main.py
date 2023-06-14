@@ -1530,7 +1530,8 @@ class tgraphcanvas(FigureCanvas):
                        'Santoker BT/ET',            #134
                        '+Santoker Power/Fan',       #135
                        '+Santoker Drum',            #136
-                       'Phidget DAQ1500'            #137
+                       'Phidget DAQ1500',           #137
+                       'TASI TA612C'                #138
                        ]
 
         # ADD DEVICE:

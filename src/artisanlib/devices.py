@@ -2788,6 +2788,18 @@ class DeviceAssignmentDlg(ArtisanResizeablDialog):
                     self.aw.qmc.device = 137
                     message = QApplication.translate('Message','Device set to {0}').format(meter)
                 ##########################
+                ##########################
+                ####  DEVICE 138 is TASI TA612C
+                elif meter == 'TASI TA612C' and self.aw.qmc.device != 138:
+                    self.aw.qmc.device = 138
+                    #self.aw.ser.comport = "COM4"
+                    self.aw.ser.baudrate = 9600
+                    self.aw.ser.bytesize = 8
+                    self.aw.ser.parity= 'N'
+                    self.aw.ser.stopbits = 1
+                    self.aw.ser.timeout = 0.7
+                    message = QApplication.translate('Message','Device set to {0}. Now, choose serial port').format(meter)
+                ##########################
 
 
                 # ADD DEVICE:
@@ -2945,7 +2957,8 @@ class DeviceAssignmentDlg(ArtisanResizeablDialog):
                 1, # 134
                 1, # 135
                 1, # 136
-                1  # 137
+                1, # 137
+                3  # 138
                 ]
             #init serial settings of extra devices
             for i in range(len(self.aw.qmc.extradevices)):

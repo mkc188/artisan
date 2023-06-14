@@ -483,7 +483,8 @@ class serialport():
                                    self.Santoker_BTET,        #134
                                    self.Santoker_PF,          #135
                                    self.Santoker_D,           #136
-                                   self.PHIDGET_DAQ1500       #137
+                                   self.PHIDGET_DAQ1500,      #137
+                                   self.TASI_TA612C           #138
                                    ]
         #string with the name of the program for device #27
         self.externalprogram = 'test.py'
@@ -1227,6 +1228,11 @@ class serialport():
         return tx,t2,t1
 
     def VOLTCRAFTK204(self):
+        tx = self.aw.qmc.timeclock.elapsedMilli()
+        t2,t1 = self.CENTER309temperature()
+        return tx,t2,t1
+
+    def TASI_TA612C(self):
         tx = self.aw.qmc.timeclock.elapsedMilli()
         t2,t1 = self.CENTER309temperature()
         return tx,t2,t1
@@ -2790,6 +2796,67 @@ class serialport():
                 import binascii
                 settings = str(self.comport) + ',' + str(self.baudrate) + ',' + str(self.bytesize)+ ',' + str(self.parity) + ',' + str(self.stopbits) + ',' + str(self.timeout)
                 self.aw.addserial('CENTER309: ' + settings + ' || Tx = ' + cmd2str(binascii.hexlify(command)) + ' || Rx = ' + cmd2str(binascii.hexlify(r)))
+
+    def TASITA612Ctemperature(self, retry=1):
+        try:
+            command = str2cmd('\xAA\x55\x01\x03\x03')
+            r = ''
+            if not self.SP.isOpen():
+                self.openport()
+            if self.SP.isOpen():
+                self.SP.reset_output_buffer()
+                self.SP.reset_input_buffer()
+                self.SP.write(command)
+                self.SP.flush()
+                libtime.sleep(.1)
+                r = self.SP.read(13)
+                # the device needs 0.1 too answer a request for temperature data
+                # and delivers a reading maximally every 0.4sec, however,
+                # readings are internally updated within the instrument only at a rate of about every 3sec thus Artisan should not sample faster than every 3sec
+                if len(r) != 13:
+                    # we did not receive all data yet, let's wait a little longer and try to fetch the missing part
+                    libtime.sleep(0.05)
+                    r = r + self.SP.read(13 - len(r))
+                if len(r) == 13:
+                    T1 = T2 = T3 = T3 = -1
+                    try:
+                        T1 = hex2int(r[5],r[4])/10.
+                    except Exception: # pylint: disable=broad-except
+                        pass
+                    try:
+                        T2 = hex2int(r[7],r[6])/10.
+                    except Exception: # pylint: disable=broad-except
+                        pass
+                    try:
+                        T3 = hex2int(r[9],r[8])/10.
+                    except Exception: # pylint: disable=broad-except
+                        pass
+                    try:
+                        T4 = hex2int(r[11],r[10])/10.
+                    except Exception: # pylint: disable=broad-except
+                        pass
+                    #save these variables if using T3 and T4
+                    self.aw.qmc.extra612T3 = T3
+                    self.aw.qmc.extra612T4 = T4
+                    self.aw.qmc.extra612TX = self.aw.qmc.timeclock.elapsedMilli()
+                    return T1,T2
+                if retry:
+                    return self.TASITA612Ctemperature(retry=retry-1)
+                nbytes = len(r)
+                self.aw.qmc.adderror(QApplication.translate('Error Message','TASITA612Ctemperature(): {0} bytes received but 13 needed').format(nbytes))
+                return -1,-1
+            return -1,-1
+        except Exception as ex: # pylint: disable=broad-except
+            _, _, exc_tb = sys.exc_info()
+            self.aw.qmc.adderror((QApplication.translate('Error Message','Exception:') + ' TASITA612Ctemperature() {0}').format(str(ex)),getattr(exc_tb, 'tb_lineno', '?'))
+            self.closeport()
+            return -1,-1
+        finally:
+            #note: logged chars should be unicode not binary
+            if self.aw.seriallogflag:
+                import binascii
+                settings = str(self.comport) + ',' + str(self.baudrate) + ',' + str(self.bytesize)+ ',' + str(self.parity) + ',' + str(self.stopbits) + ',' + str(self.timeout)
+                self.aw.addserial('TASITA612C: ' + settings + ' || Tx = ' + cmd2str(binascii.hexlify(command)) + ' || Rx = ' + cmd2str(binascii.hexlify(r)))
 
 #---
 
