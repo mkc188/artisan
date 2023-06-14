@@ -2799,7 +2799,7 @@ class serialport():
 
     def TASITA612Ctemperature(self, retry=1):
         try:
-            command = str2cmd('\xAA\x55\x01\x03\x03')
+            command = b'\xAA\x55\x01\x03\x03'
             r = ''
             if not self.SP.isOpen():
                 self.openport()
